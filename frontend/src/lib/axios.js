@@ -1,16 +1,16 @@
-import axios from 'axios';
+import axios from 'axios'
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:5000/api',
-});
+})
 
-// Automatically attach token to every request if it exists
+// Automatically attach token to every request
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`
   }
-  return config;
-});
+  return config
+})
 
-export default axiosInstance;
+export default axiosInstance
