@@ -1,76 +1,76 @@
-import { useDeleteIssue, useUpdateIssue } from "../hooks/useIssues";
 import { Link } from 'react-router-dom'
+import { useDeleteIssue, useUpdateIssue } from '../hooks/useIssues'
+import StatusIcon from './StatusIcon'
+import PriorityIcon from './PriorityIcon'
 
-const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
-const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
+const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
+const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
 
 const statusStyles = {
-  backlog: { color: "text-[#8a8a8a]", bg: "bg-[#8a8a8a]", label: "Backlog" },
-  todo: { color: "text-[#5e5ce6]", bg: "bg-[#5e5ce6]", label: "Todo" },
-  "in-progress": {
-    color: "text-[#f5a623]",
-    bg: "bg-[#f5a623]",
-    label: "In Progress",
-  },
-  done: { color: "text-[#4caf50]", bg: "bg-[#4caf50]", label: "Done" },
-  cancelled: {
-    color: "text-[#f44336]",
-    bg: "bg-[#f44336]",
-    label: "Cancelled",
-  },
-};
+  backlog: { color: 'text-[#8a8a8a]', label: 'Backlog' },
+  todo: { color: 'text-[#5e5ce6]', label: 'Todo' },
+  'in-progress': { color: 'text-[#f5a623]', label: 'In Progress' },
+  done: { color: 'text-[#4caf50]', label: 'Done' },
+  cancelled: { color: 'text-[#8a8a8a]', label: 'Cancelled' },
+}
 
 const priorityStyles = {
-  "no-priority": { color: "text-[#8a8a8a]", label: "No Priority" },
-  urgent: { color: "text-[#f44336]", label: "Urgent" },
-  high: { color: "text-[#f5a623]", label: "High" },
-  medium: { color: "text-[#5e5ce6]", label: "Medium" },
-  low: { color: "text-[#4caf50]", label: "Low" },
-};
+  'no-priority': { label: 'No Priority' },
+  urgent: { label: 'Urgent' },
+  high: { label: 'High' },
+  medium: { label: 'Medium' },
+  low: { label: 'Low' },
+}
 
 function IssueItem({ issue }) {
-  const { mutate: deleteIssue } = useDeleteIssue();
-  const { mutate: updateIssue } = useUpdateIssue();
+  const { mutate: deleteIssue } = useDeleteIssue()
+  const { mutate: updateIssue } = useUpdateIssue()
 
   const handleStatusChange = (e) => {
-    updateIssue({ id: issue._id, status: e.target.value });
-  };
+    e.stopPropagation()
+    updateIssue({ id: issue._id, status: e.target.value })
+  }
 
   const handlePriorityChange = (e) => {
-    updateIssue({ id: issue._id, priority: e.target.value });
-  };
-
-  const status = statusStyles[issue.status] || statusStyles.todo;
-  const priority =
-    priorityStyles[issue.priority] || priorityStyles["no-priority"];
+    e.stopPropagation()
+    updateIssue({ id: issue._id, priority: e.target.value })
+  }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
-      {/* Priority selector */}
-      <select
-        value={issue.priority}
-        onChange={handlePriorityChange}
-        className={`bg-transparent border-none outline-none text-xs cursor-pointer font-medium ${priority.color}`}
-        title="Priority"
-      >
-        {priorityOptions.map((p) => (
-          <option key={p} value={p} className="bg-[#1a1a1a] text-white">
-            {priorityStyles[p].label}
-          </option>
-        ))}
-      </select>
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
 
-      {/* Status indicator dot + selector */}
-      <div className="flex items-center gap-1.5">
-        <div className={`w-2 h-2 rounded-full ${status.bg} flex-shrink-0`} />
+      {/* Priority */}
+      <div className="relative flex-shrink-0">
+        <div className="flex items-center justify-center w-5 h-5 cursor-pointer">
+          <PriorityIcon priority={issue.priority} />
+        </div>
+        <select
+          value={issue.priority}
+          onChange={handlePriorityChange}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          title="Change priority"
+        >
+          {priorityOptions.map((p) => (
+            <option key={p} value={p}>
+              {priorityStyles[p].label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Status */}
+      <div className="relative flex-shrink-0">
+        <div className="flex items-center justify-center w-5 h-5 cursor-pointer">
+          <StatusIcon status={issue.status} />
+        </div>
         <select
           value={issue.status}
           onChange={handleStatusChange}
-          className={`bg-transparent border-none outline-none text-xs cursor-pointer font-medium ${status.color}`}
-          title="Status"
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          title="Change status"
         >
           {statusOptions.map((s) => (
-            <option key={s} value={s} className="bg-[#1a1a1a] text-white">
+            <option key={s} value={s}>
               {statusStyles[s].label}
             </option>
           ))}
@@ -85,24 +85,29 @@ function IssueItem({ issue }) {
         {issue.title}
       </Link>
 
-      {/* Description preview */}
-      {issue.description && (
-        <span className="text-xs text-[#8a8a8a] truncate max-w-xs hidden group-hover:inline">
-          {issue.description}
-        </span>
+      {/* Assignee */}
+      {issue.assignee ? (
+        <div
+          className="w-5 h-5 rounded-full bg-[#5e5ce6] flex items-center justify-center flex-shrink-0"
+          title={issue.assignee.name}
+        >
+          <span className="text-white text-[10px] font-medium">
+            {issue.assignee.name.charAt(0).toUpperCase()}
+          </span>
+        </div>
+      ) : (
+        <div
+          className="w-5 h-5 rounded-full border border-dashed border-[#4a4a4a] flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Unassigned"
+        />
       )}
 
-      {/* Assignee */}
-      <span className="text-xs text-[#8a8a8a] hidden group-hover:inline flex-shrink-0">
-        {issue.assignee?.name || "Unassigned"}
-      </span>
-
-      {/* Created by avatar */}
+      {/* Created by */}
       <div
-        className="w-5 h-5 rounded-full bg-[#5e5ce6] flex items-center justify-center text-white flex-shrink-0"
-        title={issue.createdBy?.name}
+        className="w-5 h-5 rounded-full bg-[#2e2e2e] flex items-center justify-center flex-shrink-0"
+        title={`Created by ${issue.createdBy?.name}`}
       >
-        <span className="text-[10px] font-medium">
+        <span className="text-[#8a8a8a] text-[10px] font-medium">
           {issue.createdBy?.name?.charAt(0).toUpperCase()}
         </span>
       </div>
@@ -115,7 +120,7 @@ function IssueItem({ issue }) {
         Delete
       </button>
     </div>
-  );
+  )
 }
 
-export default IssueItem;
+export default IssueItem

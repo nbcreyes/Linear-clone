@@ -6,6 +6,8 @@ import { useUpdateIssue, useDeleteIssue } from "../hooks/useIssues";
 import { useGetWorkspaceMembers } from "../hooks/useWorkspace";
 import useWorkspaceStore from "../store/workspaceStore";
 import { IssueDetailSkeleton } from "../components/Skeleton";
+import StatusIcon from "../components/StatusIcon";
+import PriorityIcon from "../components/PriorityIcon";
 
 const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
 const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
@@ -191,10 +193,8 @@ function IssuePage() {
               <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
                 Status
               </span>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${status.bg} flex-shrink-0`}
-                />
+              <div className="relative flex items-center gap-2">
+                <StatusIcon status={issue.status} />
                 <select
                   value={issue.status}
                   onChange={handleStatusChange}
@@ -207,6 +207,31 @@ function IssuePage() {
                       className="bg-[#1a1a1a] text-white"
                     >
                       {statusStyles[s].label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Priority */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
+                Priority
+              </span>
+              <div className="relative flex items-center gap-2">
+                <PriorityIcon priority={issue.priority} />
+                <select
+                  value={issue.priority}
+                  onChange={handlePriorityChange}
+                  className={`bg-transparent border-none outline-none text-sm cursor-pointer font-medium ${priority.color}`}
+                >
+                  {priorityOptions.map((p) => (
+                    <option
+                      key={p}
+                      value={p}
+                      className="bg-[#1a1a1a] text-white"
+                    >
+                      {priorityStyles[p].label}
                     </option>
                   ))}
                 </select>
