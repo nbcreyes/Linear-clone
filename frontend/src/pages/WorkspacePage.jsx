@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCreateWorkspace, useJoinWorkspace, useGetUserWorkspaces } from '../hooks/useWorkspace'
 import useWorkspaceStore from '../store/workspaceStore'
 import useAuthStore from '../store/authStore'
+import { WorkspaceListSkeleton } from '../components/Skeleton'
 
 function WorkspacePage() {
   const [tab, setTab] = useState('create')
@@ -14,7 +15,7 @@ function WorkspacePage() {
   const setWorkspace = useWorkspaceStore((state) => state.setWorkspace)
   const logout = useAuthStore((state) => state.logout)
 
-  const { data: existingWorkspaces } = useGetUserWorkspaces()
+  const { data: existingWorkspaces, isLoading: isLoadingWorkspaces } = useGetUserWorkspaces()
 
   const { mutate: createWorkspace, isPending: isCreating } = useCreateWorkspace()
   const { mutate: joinWorkspace, isPending: isJoining } = useJoinWorkspace()
@@ -66,11 +67,13 @@ function WorkspacePage() {
         </div>
 
         {/* Existing workspaces */}
-        {existingWorkspaces && existingWorkspaces.length > 0 && (
-          <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg p-4 mb-4">
-            <h2 className="text-white text-sm font-medium mb-3">
-              Your workspaces
-            </h2>
+        <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg p-4 mb-4">
+          <h2 className="text-white text-sm font-medium mb-3">
+            Your workspaces
+          </h2>
+          {isLoadingWorkspaces ? (
+            <WorkspaceListSkeleton />
+          ) : existingWorkspaces && existingWorkspaces.length > 0 ? (
             <div className="space-y-2">
               {existingWorkspaces.map((workspace) => (
                 <button
@@ -92,8 +95,10 @@ function WorkspacePage() {
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-[#8a8a8a] text-xs">No workspaces yet</p>
+          )}
+        </div>
 
         {/* Create or Join */}
         <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg p-6">
