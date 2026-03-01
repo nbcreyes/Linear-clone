@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import IssuesPage from './pages/IssuesPage'
+import WorkspacePage from './pages/WorkspacePage'
 import ProtectedRoute from './components/ProtectedRoute'
+import WorkspaceRoute from './components/WorkspaceRoute'
 import Layout from './components/Layout'
 
 function App() {
@@ -13,12 +15,22 @@ function App() {
         <Route path='/login' element={<LoginPage />} />
         <Route path='/register' element={<RegisterPage />} />
         <Route
+          path='/workspace'
+          element={
+            <ProtectedRoute>
+              <WorkspacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path='/issues'
           element={
             <ProtectedRoute>
-              <Layout>
-                <IssuesPage />
-              </Layout>
+              <WorkspaceRoute>
+                <Layout>
+                  <IssuesPage />
+                </Layout>
+              </WorkspaceRoute>
             </ProtectedRoute>
           }
         />
