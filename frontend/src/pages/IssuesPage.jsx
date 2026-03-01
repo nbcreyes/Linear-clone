@@ -1,116 +1,121 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useGetIssues } from "../hooks/useIssues";
-import IssueItem from "../components/IssueItem";
-import CreateIssueModal from "../components/CreateIssueModal";
-import socket from "../lib/socket";
-import useWorkspaceStore from "../store/workspaceStore";
-import { IssueRowSkeleton } from "../components/Skeleton";
+import { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useGetIssues } from '../hooks/useIssues'
+import IssueItem from '../components/IssueItem'
+import CreateIssueModal from '../components/CreateIssueModal'
+import socket from '../lib/socket'
+import useWorkspaceStore from '../store/workspaceStore'
+import { IssueRowSkeleton } from '../components/Skeleton'
+import useKeyboardShortcut from '../hooks/useKeyboardShortcut'
 
-const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
-const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
+const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
+const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
 
 const statusStyles = {
-  backlog: "Backlog",
-  todo: "Todo",
-  "in-progress": "In Progress",
-  done: "Done",
-  cancelled: "Cancelled",
-};
+  backlog: 'Backlog',
+  todo: 'Todo',
+  'in-progress': 'In Progress',
+  done: 'Done',
+  cancelled: 'Cancelled',
+}
 
 const priorityStyles = {
-  "no-priority": "No Priority",
-  urgent: "Urgent",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
+  'no-priority': 'No Priority',
+  urgent: 'Urgent',
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+}
 
 function IssuesPage() {
-  const [showModal, setShowModal] = useState(false);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterPriority, setFilterPriority] = useState("");
+  const [showModal, setShowModal] = useState(false)
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterPriority, setFilterPriority] = useState('')
 
-  const { data: issues, isLoading, isError } = useGetIssues();
-  const queryClient = useQueryClient();
-  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id);
+  const { data: issues, isLoading, isError } = useGetIssues()
+  const queryClient = useQueryClient()
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
+
+  useKeyboardShortcut('c', () => setShowModal(true))
 
   useEffect(() => {
-    if (!workspaceId) return;
+    if (!workspaceId) return
 
     socket.on(`issue:created:${workspaceId}`, (newIssue) => {
-      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
-        if (!oldIssues) return [newIssue];
-        const exists = oldIssues.some((i) => i._id === newIssue._id);
-        if (exists) return oldIssues;
-        return [newIssue, ...oldIssues];
-      });
-    });
+      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+        if (!oldIssues) return [newIssue]
+        const exists = oldIssues.some((i) => i._id === newIssue._id)
+        if (exists) return oldIssues
+        return [newIssue, ...oldIssues]
+      })
+    })
 
     socket.on(`issue:updated:${workspaceId}`, (updatedIssue) => {
-      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
-        if (!oldIssues) return oldIssues;
+      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+        if (!oldIssues) return oldIssues
         return oldIssues.map((i) =>
-          i._id === updatedIssue._id ? updatedIssue : i,
-        );
-      });
-    });
+          i._id === updatedIssue._id ? updatedIssue : i
+        )
+      })
+    })
 
     socket.on(`issue:deleted:${workspaceId}`, (deletedId) => {
-      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
-        if (!oldIssues) return oldIssues;
-        return oldIssues.filter((i) => i._id !== deletedId);
-      });
-    });
+      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+        if (!oldIssues) return oldIssues
+        return oldIssues.filter((i) => i._id !== deletedId)
+      })
+    })
 
     return () => {
-      socket.off(`issue:created:${workspaceId}`);
-      socket.off(`issue:updated:${workspaceId}`);
-      socket.off(`issue:deleted:${workspaceId}`);
-    };
-  }, [queryClient, workspaceId]);
+      socket.off(`issue:created:${workspaceId}`)
+      socket.off(`issue:updated:${workspaceId}`)
+      socket.off(`issue:deleted:${workspaceId}`)
+    }
+  }, [queryClient, workspaceId])
 
-  // Filter and search logic
   const filteredIssues = useMemo(() => {
-    if (!issues) return [];
+    if (!issues) return []
 
     return issues.filter((issue) => {
       const matchesSearch = issue.title
         .toLowerCase()
-        .includes(search.toLowerCase());
+        .includes(search.toLowerCase())
 
-      const matchesStatus = filterStatus ? issue.status === filterStatus : true;
+      const matchesStatus = filterStatus
+        ? issue.status === filterStatus
+        : true
 
       const matchesPriority = filterPriority
         ? issue.priority === filterPriority
-        : true;
+        : true
 
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-  }, [issues, search, filterStatus, filterPriority]);
+      return matchesSearch && matchesStatus && matchesPriority
+    })
+  }, [issues, search, filterStatus, filterPriority])
 
-  const hasActiveFilters = search || filterStatus || filterPriority;
+  const hasActiveFilters = search || filterStatus || filterPriority
 
   const clearFilters = () => {
-    setSearch("");
-    setFilterStatus("");
-    setFilterPriority("");
-  };
+    setSearch('')
+    setFilterStatus('')
+    setFilterPriority('')
+  }
 
   const groups = [
-    { label: "In Progress", key: "in-progress" },
-    { label: "Todo", key: "todo" },
-    { label: "Backlog", key: "backlog" },
-    { label: "Done", key: "done" },
-    { label: "Cancelled", key: "cancelled" },
+    { label: 'In Progress', key: 'in-progress' },
+    { label: 'Todo', key: 'todo' },
+    { label: 'Backlog', key: 'backlog' },
+    { label: 'Done', key: 'done' },
+    { label: 'Cancelled', key: 'cancelled' },
   ].map((group) => ({
     ...group,
     issues: filteredIssues.filter((i) => i.status === group.key),
-  }));
+  }))
 
   return (
     <div className="h-full flex flex-col">
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-[#2e2e2e]">
         <div className="flex items-center gap-3">
@@ -126,15 +131,17 @@ function IssuesPage() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-3 py-1.5 bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white text-xs font-medium rounded transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white text-xs font-medium rounded transition-colors"
         >
           New Issue
+          <span className="bg-[#4f4dd4] text-white text-[10px] px-1.5 py-0.5 rounded">
+            C
+          </span>
         </button>
       </div>
 
       {/* Search and filters */}
       <div className="flex items-center gap-2 px-6 py-2 border-b border-[#2e2e2e]">
-        {/* Search */}
         <input
           type="text"
           value={search}
@@ -143,12 +150,11 @@ function IssuesPage() {
           className="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] text-white text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] placeholder-[#4a4a4a] transition-colors"
         />
 
-        {/* Status filter */}
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           className={`bg-[#1a1a1a] border border-[#2e2e2e] text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] transition-colors cursor-pointer ${
-            filterStatus ? "text-white border-[#5e5ce6]" : "text-[#8a8a8a]"
+            filterStatus ? 'text-white border-[#5e5ce6]' : 'text-[#8a8a8a]'
           }`}
         >
           <option value="">All statuses</option>
@@ -159,12 +165,11 @@ function IssuesPage() {
           ))}
         </select>
 
-        {/* Priority filter */}
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
           className={`bg-[#1a1a1a] border border-[#2e2e2e] text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] transition-colors cursor-pointer ${
-            filterPriority ? "text-white border-[#5e5ce6]" : "text-[#8a8a8a]"
+            filterPriority ? 'text-white border-[#5e5ce6]' : 'text-[#8a8a8a]'
           }`}
         >
           <option value="">All priorities</option>
@@ -175,7 +180,6 @@ function IssuesPage() {
           ))}
         </select>
 
-        {/* Clear filters */}
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -247,16 +251,18 @@ function IssuesPage() {
                     <IssueItem key={issue._id} issue={issue} />
                   ))}
                 </div>
-              ) : null,
+              ) : null
             )}
           </div>
         )}
       </div>
 
       {/* Create Issue Modal */}
-      {showModal && <CreateIssueModal onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <CreateIssueModal onClose={() => setShowModal(false)} />
+      )}
     </div>
-  );
+  )
 }
 
-export default IssuesPage;
+export default IssuesPage
