@@ -8,24 +8,24 @@ import {
 } from '../controllers/issueController.js';
 import protect from '../middleware/authMiddleware.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-// All routes below are protected
+// All routes are protected
 router.use(protect);
 
-// GET /api/issues
+// GET /api/workspaces/:workspaceId/issues
 router.get('/', getIssues);
 
-// GET /api/issues/:id
+// GET /api/workspaces/:workspaceId/issues/:id
 router.get('/:id', getIssue);
 
-// POST /api/issues
+// POST /api/workspaces/:workspaceId/issues
 router.post('/', createIssue);
 
-// PUT /api/issues/:id
+// PUT /api/workspaces/:workspaceId/issues/:id
 router.put('/:id', updateIssue);
 
-// DELETE /api/issues/:id
+// DELETE /api/workspaces/:workspaceId/issues/:id
 router.delete('/:id', deleteIssue);
 
 export default router;
