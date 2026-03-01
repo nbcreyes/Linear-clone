@@ -52,7 +52,15 @@ export const createIssue = async (req, res) => {
       createdBy: req.user._id,
     });
 
-    res.status(201).json(issue);
+    const populatedIssue = await Issue.findById(issue._id)
+      .populate('createdBy', 'name email')
+      .populate('assignee', 'name email');
+
+    // Emit to all connected clients
+    const io = req.app.get('io');
+    io.emit('issue:created', populatedIssue);
+
+    res.status(201).json(populatedIssue);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -76,6 +84,10 @@ export const updateIssue = async (req, res) => {
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
 
+    // Emit to all connected clients
+    const io = req.app.get('io');
+    io.emit('issue:updated', updatedIssue);
+
     res.status(200).json(updatedIssue);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -93,6 +105,10 @@ export const deleteIssue = async (req, res) => {
     }
 
     await issue.deleteOne();
+
+    // Emit to all connected clients
+    const io = req.app.get('io');
+    io.emit('issue:deleted', req.params.id);
 
     res.status(200).json({ message: 'Issue deleted successfully' });
   } catch (error) {
