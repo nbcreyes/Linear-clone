@@ -11,18 +11,15 @@ function IssuesPage() {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // Listen for new issue
     socket.on('issue:created', (newIssue) => {
       queryClient.setQueryData(['issues'], (oldIssues) => {
         if (!oldIssues) return [newIssue]
-        // Avoid duplicates
         const exists = oldIssues.some((i) => i._id === newIssue._id)
         if (exists) return oldIssues
         return [newIssue, ...oldIssues]
       })
     })
 
-    // Listen for updated issue
     socket.on('issue:updated', (updatedIssue) => {
       queryClient.setQueryData(['issues'], (oldIssues) => {
         if (!oldIssues) return oldIssues
@@ -32,7 +29,6 @@ function IssuesPage() {
       })
     })
 
-    // Listen for deleted issue
     socket.on('issue:deleted', (deletedId) => {
       queryClient.setQueryData(['issues'], (oldIssues) => {
         if (!oldIssues) return oldIssues
@@ -40,7 +36,6 @@ function IssuesPage() {
       })
     })
 
-    // Cleanup listeners when component unmounts
     return () => {
       socket.off('issue:created')
       socket.off('issue:updated')
@@ -48,15 +43,36 @@ function IssuesPage() {
     }
   }, [queryClient])
 
+  const todoIssues = issues?.filter((i) => i.status === 'todo') || []
+  const inProgressIssues = issues?.filter((i) => i.status === 'in-progress') || []
+  const backlogIssues = issues?.filter((i) => i.status === 'backlog') || []
+  const doneIssues = issues?.filter((i) => i.status === 'done') || []
+  const cancelledIssues = issues?.filter((i) => i.status === 'cancelled') || []
+
+  const groups = [
+    { label: 'In Progress', issues: inProgressIssues },
+    { label: 'Todo', issues: todoIssues },
+    { label: 'Backlog', issues: backlogIssues },
+    { label: 'Done', issues: doneIssues },
+    { label: 'Cancelled', issues: cancelledIssues },
+  ]
+
   return (
     <div className="h-full flex flex-col">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#2e2e2e]">
-        <h1 className="text-white text-sm font-semibold">Issues</h1>
+      <div className="flex items-center justify-between px-6 py-3 border-b border-[#2e2e2e]">
+        <div className="flex items-center gap-3">
+          <h1 className="text-white text-sm font-semibold">Issues</h1>
+          {issues && (
+            <span className="text-xs text-[#8a8a8a] bg-[#242424] px-2 py-0.5 rounded-full">
+              {issues.length}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-3 py-1.5 bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white text-sm rounded transition-colors"
+          className="px-3 py-1.5 bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white text-xs font-medium rounded transition-colors"
         >
           New Issue
         </button>
@@ -77,16 +93,39 @@ function IssuesPage() {
         )}
 
         {!isLoading && !isError && issues?.length === 0 && (
-          <div className="flex items-center justify-center h-32">
-            <p className="text-[#8a8a8a] text-sm">
-              No issues yet. Create your first one.
-            </p>
+          <div className="flex flex-col items-center justify-center h-32 gap-2">
+            <p className="text-[#8a8a8a] text-sm">No issues yet</p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-[#5e5ce6] text-xs hover:underline"
+            >
+              Create your first issue
+            </button>
           </div>
         )}
 
-        {!isLoading && !isError && issues?.map((issue) => (
-          <IssueItem key={issue._id} issue={issue} />
-        ))}
+        {!isLoading && !isError && issues?.length > 0 && (
+          <div>
+            {groups.map((group) =>
+              group.issues.length > 0 ? (
+                <div key={group.label}>
+                  {/* Group header */}
+                  <div className="flex items-center gap-2 px-4 py-2 sticky top-0 bg-[#0f0f0f] border-b border-[#2e2e2e]">
+                    <span className="text-xs text-[#8a8a8a] font-medium">
+                      {group.label}
+                    </span>
+                    <span className="text-xs text-[#8a8a8a] bg-[#242424] px-1.5 py-0.5 rounded-full">
+                      {group.issues.length}
+                    </span>
+                  </div>
+                  {group.issues.map((issue) => (
+                    <IssueItem key={issue._id} issue={issue} />
+                  ))}
+                </div>
+              ) : null
+            )}
+          </div>
+        )}
       </div>
 
       {/* Create Issue Modal */}
