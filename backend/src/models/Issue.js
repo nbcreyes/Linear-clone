@@ -31,6 +31,11 @@ const issueSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    workspace: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Workspace',
+      required: true,
+    },
   },
   {
     timestamps: true,
