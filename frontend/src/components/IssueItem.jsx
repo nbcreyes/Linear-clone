@@ -2,80 +2,64 @@ import { Link } from 'react-router-dom'
 import { useDeleteIssue, useUpdateIssue } from '../hooks/useIssues'
 import StatusIcon from './StatusIcon'
 import PriorityIcon from './PriorityIcon'
+import Dropdown from './Dropdown'
 
-const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
-const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
+const statusOptions = [
+  { value: 'backlog', label: 'Backlog' },
+  { value: 'todo', label: 'Todo' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'done', label: 'Done' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
 
-const statusStyles = {
-  backlog: { color: 'text-[#8a8a8a]', label: 'Backlog' },
-  todo: { color: 'text-[#5e5ce6]', label: 'Todo' },
-  'in-progress': { color: 'text-[#f5a623]', label: 'In Progress' },
-  done: { color: 'text-[#4caf50]', label: 'Done' },
-  cancelled: { color: 'text-[#8a8a8a]', label: 'Cancelled' },
-}
-
-const priorityStyles = {
-  'no-priority': { label: 'No Priority' },
-  urgent: { label: 'Urgent' },
-  high: { label: 'High' },
-  medium: { label: 'Medium' },
-  low: { label: 'Low' },
-}
+const priorityOptions = [
+  { value: 'no-priority', label: 'No Priority' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+]
 
 function IssueItem({ issue }) {
   const { mutate: deleteIssue } = useDeleteIssue()
   const { mutate: updateIssue } = useUpdateIssue()
 
-  const handleStatusChange = (e) => {
-    e.stopPropagation()
-    updateIssue({ id: issue._id, status: e.target.value })
-  }
+  const statusOptionsWithIcons = statusOptions.map((s) => ({
+    ...s,
+    icon: <StatusIcon status={s.value} size={12} />,
+  }))
 
-  const handlePriorityChange = (e) => {
-    e.stopPropagation()
-    updateIssue({ id: issue._id, priority: e.target.value })
-  }
+  const priorityOptionsWithIcons = priorityOptions.map((p) => ({
+    ...p,
+    icon: <PriorityIcon priority={p.value} size={12} />,
+  }))
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
 
       {/* Priority */}
-      <div className="relative flex-shrink-0">
-        <div className="flex items-center justify-center w-5 h-5 cursor-pointer">
-          <PriorityIcon priority={issue.priority} />
-        </div>
-        <select
-          value={issue.priority}
-          onChange={handlePriorityChange}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full"
-          title="Change priority"
-        >
-          {priorityOptions.map((p) => (
-            <option key={p} value={p}>
-              {priorityStyles[p].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Dropdown
+        value={issue.priority}
+        options={priorityOptionsWithIcons}
+        onChange={(value) => updateIssue({ id: issue._id, priority: value })}
+        trigger={
+          <div className="flex items-center justify-center w-5 h-5 rounded hover:bg-[#2e2e2e] transition-colors">
+            <PriorityIcon priority={issue.priority} size={12} />
+          </div>
+        }
+      />
 
       {/* Status */}
-      <div className="relative flex-shrink-0">
-        <div className="flex items-center justify-center w-5 h-5 cursor-pointer">
-          <StatusIcon status={issue.status} />
-        </div>
-        <select
-          value={issue.status}
-          onChange={handleStatusChange}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full"
-          title="Change status"
-        >
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              {statusStyles[s].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Dropdown
+        value={issue.status}
+        options={statusOptionsWithIcons}
+        onChange={(value) => updateIssue({ id: issue._id, status: value })}
+        trigger={
+          <div className="flex items-center justify-center w-5 h-5 rounded hover:bg-[#2e2e2e] transition-colors">
+            <StatusIcon status={issue.status} size={14} />
+          </div>
+        }
+      />
 
       {/* Title */}
       <Link

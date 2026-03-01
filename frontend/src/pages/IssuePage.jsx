@@ -8,6 +8,7 @@ import useWorkspaceStore from "../store/workspaceStore";
 import { IssueDetailSkeleton } from "../components/Skeleton";
 import StatusIcon from "../components/StatusIcon";
 import PriorityIcon from "../components/PriorityIcon";
+import Dropdown from "../components/Dropdown";
 
 const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
 const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
@@ -193,24 +194,85 @@ function IssuePage() {
               <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
                 Status
               </span>
-              <div className="relative flex items-center gap-2">
-                <StatusIcon status={issue.status} />
-                <select
-                  value={issue.status}
-                  onChange={handleStatusChange}
-                  className={`bg-transparent border-none outline-none text-sm cursor-pointer font-medium ${status.color}`}
-                >
-                  {statusOptions.map((s) => (
-                    <option
-                      key={s}
-                      value={s}
-                      className="bg-[#1a1a1a] text-white"
-                    >
-                      {statusStyles[s].label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                value={issue.status}
+                options={statusOptions.map((s) => ({
+                  value: s,
+                  label: statusStyles[s].label,
+                  icon: <StatusIcon status={s} size={12} />,
+                }))}
+                onChange={(value) => updateIssue({ id, status: value })}
+                trigger={
+                  <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#242424] transition-colors">
+                    <StatusIcon status={issue.status} size={12} />
+                    <span className={`text-sm font-medium ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
+                Priority
+              </span>
+              <Dropdown
+                value={issue.priority}
+                options={priorityOptions.map((p) => ({
+                  value: p,
+                  label: priorityStyles[p].label,
+                  icon: <PriorityIcon priority={p} size={12} />,
+                }))}
+                onChange={(value) => updateIssue({ id, priority: value })}
+                trigger={
+                  <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#242424] transition-colors">
+                    <PriorityIcon priority={issue.priority} size={12} />
+                    <span className={`text-sm font-medium ${priority.color}`}>
+                      {priority.label}
+                    </span>
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Assignee */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
+                Assignee
+              </span>
+              <Dropdown
+                value={issue.assignee?._id || ""}
+                options={[
+                  { value: "", label: "Unassigned" },
+                  ...(members?.map((m) => ({
+                    value: m.user._id,
+                    label: m.user.name,
+                  })) || []),
+                ]}
+                onChange={(value) =>
+                  updateIssue({ id, assignee: value || null })
+                }
+                trigger={
+                  <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#242424] transition-colors">
+                    {issue.assignee ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full bg-[#5e5ce6] flex items-center justify-center">
+                          <span className="text-white text-[9px] font-medium">
+                            {issue.assignee.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-sm text-white">
+                          {issue.assignee.name}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-sm text-[#8a8a8a]">Unassigned</span>
+                    )}
+                  </div>
+                }
+              />
             </div>
 
             {/* Priority */}

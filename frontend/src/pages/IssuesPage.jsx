@@ -1,121 +1,121 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useGetIssues } from '../hooks/useIssues'
-import IssueItem from '../components/IssueItem'
-import CreateIssueModal from '../components/CreateIssueModal'
-import socket from '../lib/socket'
-import useWorkspaceStore from '../store/workspaceStore'
-import { IssueRowSkeleton } from '../components/Skeleton'
-import useKeyboardShortcut from '../hooks/useKeyboardShortcut'
+import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGetIssues } from "../hooks/useIssues";
+import IssueItem from "../components/IssueItem";
+import CreateIssueModal from "../components/CreateIssueModal";
+import socket from "../lib/socket";
+import useWorkspaceStore from "../store/workspaceStore";
+import { IssueRowSkeleton } from "../components/Skeleton";
+import useKeyboardShortcut from "../hooks/useKeyboardShortcut";
+import StatusIcon from '../components/StatusIcon'
+import PriorityIcon from '../components/PriorityIcon'
+import Dropdown from '../components/Dropdown'
 
-const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
-const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
+const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
+const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
 
 const statusStyles = {
-  backlog: 'Backlog',
-  todo: 'Todo',
-  'in-progress': 'In Progress',
-  done: 'Done',
-  cancelled: 'Cancelled',
-}
+  backlog: "Backlog",
+  todo: "Todo",
+  "in-progress": "In Progress",
+  done: "Done",
+  cancelled: "Cancelled",
+};
 
 const priorityStyles = {
-  'no-priority': 'No Priority',
-  urgent: 'Urgent',
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
-}
+  "no-priority": "No Priority",
+  urgent: "Urgent",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+};
 
 function IssuesPage() {
-  const [showModal, setShowModal] = useState(false)
-  const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [filterPriority, setFilterPriority] = useState('')
+  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
 
-  const { data: issues, isLoading, isError } = useGetIssues()
-  const queryClient = useQueryClient()
-  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
+  const { data: issues, isLoading, isError } = useGetIssues();
+  const queryClient = useQueryClient();
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id);
 
-  useKeyboardShortcut('c', () => setShowModal(true))
+  useKeyboardShortcut("c", () => setShowModal(true));
 
   useEffect(() => {
-    if (!workspaceId) return
+    if (!workspaceId) return;
 
     socket.on(`issue:created:${workspaceId}`, (newIssue) => {
-      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
-        if (!oldIssues) return [newIssue]
-        const exists = oldIssues.some((i) => i._id === newIssue._id)
-        if (exists) return oldIssues
-        return [newIssue, ...oldIssues]
-      })
-    })
+      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
+        if (!oldIssues) return [newIssue];
+        const exists = oldIssues.some((i) => i._id === newIssue._id);
+        if (exists) return oldIssues;
+        return [newIssue, ...oldIssues];
+      });
+    });
 
     socket.on(`issue:updated:${workspaceId}`, (updatedIssue) => {
-      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
-        if (!oldIssues) return oldIssues
+      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
+        if (!oldIssues) return oldIssues;
         return oldIssues.map((i) =>
-          i._id === updatedIssue._id ? updatedIssue : i
-        )
-      })
-    })
+          i._id === updatedIssue._id ? updatedIssue : i,
+        );
+      });
+    });
 
     socket.on(`issue:deleted:${workspaceId}`, (deletedId) => {
-      queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
-        if (!oldIssues) return oldIssues
-        return oldIssues.filter((i) => i._id !== deletedId)
-      })
-    })
+      queryClient.setQueryData(["issues", workspaceId], (oldIssues) => {
+        if (!oldIssues) return oldIssues;
+        return oldIssues.filter((i) => i._id !== deletedId);
+      });
+    });
 
     return () => {
-      socket.off(`issue:created:${workspaceId}`)
-      socket.off(`issue:updated:${workspaceId}`)
-      socket.off(`issue:deleted:${workspaceId}`)
-    }
-  }, [queryClient, workspaceId])
+      socket.off(`issue:created:${workspaceId}`);
+      socket.off(`issue:updated:${workspaceId}`);
+      socket.off(`issue:deleted:${workspaceId}`);
+    };
+  }, [queryClient, workspaceId]);
 
   const filteredIssues = useMemo(() => {
-    if (!issues) return []
+    if (!issues) return [];
 
     return issues.filter((issue) => {
       const matchesSearch = issue.title
         .toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(search.toLowerCase());
 
-      const matchesStatus = filterStatus
-        ? issue.status === filterStatus
-        : true
+      const matchesStatus = filterStatus ? issue.status === filterStatus : true;
 
       const matchesPriority = filterPriority
         ? issue.priority === filterPriority
-        : true
+        : true;
 
-      return matchesSearch && matchesStatus && matchesPriority
-    })
-  }, [issues, search, filterStatus, filterPriority])
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+  }, [issues, search, filterStatus, filterPriority]);
 
-  const hasActiveFilters = search || filterStatus || filterPriority
+  const hasActiveFilters = search || filterStatus || filterPriority;
 
   const clearFilters = () => {
-    setSearch('')
-    setFilterStatus('')
-    setFilterPriority('')
-  }
+    setSearch("");
+    setFilterStatus("");
+    setFilterPriority("");
+  };
 
   const groups = [
-    { label: 'In Progress', key: 'in-progress' },
-    { label: 'Todo', key: 'todo' },
-    { label: 'Backlog', key: 'backlog' },
-    { label: 'Done', key: 'done' },
-    { label: 'Cancelled', key: 'cancelled' },
+    { label: "In Progress", key: "in-progress" },
+    { label: "Todo", key: "todo" },
+    { label: "Backlog", key: "backlog" },
+    { label: "Done", key: "done" },
+    { label: "Cancelled", key: "cancelled" },
   ].map((group) => ({
     ...group,
     issues: filteredIssues.filter((i) => i.status === group.key),
-  }))
+  }));
 
   return (
     <div className="h-full flex flex-col">
-
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-[#2e2e2e]">
         <div className="flex items-center gap-3">
@@ -142,6 +142,7 @@ function IssuesPage() {
 
       {/* Search and filters */}
       <div className="flex items-center gap-2 px-6 py-2 border-b border-[#2e2e2e]">
+        {/* Search */}
         <input
           type="text"
           value={search}
@@ -150,36 +151,111 @@ function IssuesPage() {
           className="flex-1 bg-[#1a1a1a] border border-[#2e2e2e] text-white text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] placeholder-[#4a4a4a] transition-colors"
         />
 
-        <select
+        {/* Status filter */}
+        <Dropdown
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className={`bg-[#1a1a1a] border border-[#2e2e2e] text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] transition-colors cursor-pointer ${
-            filterStatus ? 'text-white border-[#5e5ce6]' : 'text-[#8a8a8a]'
-          }`}
-        >
-          <option value="">All statuses</option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s} className="bg-[#1a1a1a] text-white">
-              {statusStyles[s]}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: "", label: "All statuses" },
+            {
+              value: "backlog",
+              label: "Backlog",
+              icon: <StatusIcon status="backlog" size={12} />,
+            },
+            {
+              value: "todo",
+              label: "Todo",
+              icon: <StatusIcon status="todo" size={12} />,
+            },
+            {
+              value: "in-progress",
+              label: "In Progress",
+              icon: <StatusIcon status="in-progress" size={12} />,
+            },
+            {
+              value: "done",
+              label: "Done",
+              icon: <StatusIcon status="done" size={12} />,
+            },
+            {
+              value: "cancelled",
+              label: "Cancelled",
+              icon: <StatusIcon status="cancelled" size={12} />,
+            },
+          ]}
+          onChange={setFilterStatus}
+          trigger={
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs transition-colors hover:bg-[#1e1e1e] ${
+                filterStatus
+                  ? "border-[#5e5ce6] text-white bg-[#1e1e1e]"
+                  : "border-[#2e2e2e] text-[#8a8a8a]"
+              }`}
+            >
+              {filterStatus ? (
+                <>
+                  <StatusIcon status={filterStatus} size={12} />
+                  <span>{statusStyles[filterStatus]}</span>
+                </>
+              ) : (
+                <span>Status</span>
+              )}
+            </div>
+          }
+        />
 
-        <select
+        {/* Priority filter */}
+        <Dropdown
           value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value)}
-          className={`bg-[#1a1a1a] border border-[#2e2e2e] text-xs rounded px-3 py-1.5 outline-none focus:border-[#5e5ce6] transition-colors cursor-pointer ${
-            filterPriority ? 'text-white border-[#5e5ce6]' : 'text-[#8a8a8a]'
-          }`}
-        >
-          <option value="">All priorities</option>
-          {priorityOptions.map((p) => (
-            <option key={p} value={p} className="bg-[#1a1a1a] text-white">
-              {priorityStyles[p]}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: "", label: "All priorities" },
+            {
+              value: "no-priority",
+              label: "No Priority",
+              icon: <PriorityIcon priority="no-priority" size={12} />,
+            },
+            {
+              value: "urgent",
+              label: "Urgent",
+              icon: <PriorityIcon priority="urgent" size={12} />,
+            },
+            {
+              value: "high",
+              label: "High",
+              icon: <PriorityIcon priority="high" size={12} />,
+            },
+            {
+              value: "medium",
+              label: "Medium",
+              icon: <PriorityIcon priority="medium" size={12} />,
+            },
+            {
+              value: "low",
+              label: "Low",
+              icon: <PriorityIcon priority="low" size={12} />,
+            },
+          ]}
+          onChange={setFilterPriority}
+          trigger={
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs transition-colors hover:bg-[#1e1e1e] ${
+                filterPriority
+                  ? "border-[#5e5ce6] text-white bg-[#1e1e1e]"
+                  : "border-[#2e2e2e] text-[#8a8a8a]"
+              }`}
+            >
+              {filterPriority ? (
+                <>
+                  <PriorityIcon priority={filterPriority} size={12} />
+                  <span>{priorityStyles[filterPriority]}</span>
+                </>
+              ) : (
+                <span>Priority</span>
+              )}
+            </div>
+          }
+        />
 
+        {/* Clear filters */}
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -251,18 +327,16 @@ function IssuesPage() {
                     <IssueItem key={issue._id} issue={issue} />
                   ))}
                 </div>
-              ) : null
+              ) : null,
             )}
           </div>
         )}
       </div>
 
       {/* Create Issue Modal */}
-      {showModal && (
-        <CreateIssueModal onClose={() => setShowModal(false)} />
-      )}
+      {showModal && <CreateIssueModal onClose={() => setShowModal(false)} />}
     </div>
-  )
+  );
 }
 
-export default IssuesPage
+export default IssuesPage;
