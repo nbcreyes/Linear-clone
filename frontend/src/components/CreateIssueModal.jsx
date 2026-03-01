@@ -1,20 +1,29 @@
 import { useState } from 'react'
 import { useCreateIssue } from '../hooks/useIssues'
+import { useGetWorkspaceMembers } from '../hooks/useWorkspace'
 
 function CreateIssueModal({ onClose }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState('todo')
   const [priority, setPriority] = useState('no-priority')
+  const [assignee, setAssignee] = useState('')
 
   const { mutate: createIssue, isPending } = useCreateIssue()
+  const { data: members } = useGetWorkspaceMembers()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!title.trim()) return
 
     createIssue(
-      { title, description, status, priority },
+      {
+        title,
+        description,
+        status,
+        priority,
+        assignee: assignee || null,
+      },
       { onSuccess: onClose }
     )
   }
@@ -28,6 +37,8 @@ function CreateIssueModal({ onClose }) {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Title */}
           <div>
             <input
               type="text"
@@ -40,6 +51,7 @@ function CreateIssueModal({ onClose }) {
             />
           </div>
 
+          {/* Description */}
           <div>
             <textarea
               value={description}
@@ -50,6 +62,7 @@ function CreateIssueModal({ onClose }) {
             />
           </div>
 
+          {/* Status and Priority */}
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-xs text-[#8a8a8a] mb-1">
@@ -82,6 +95,26 @@ function CreateIssueModal({ onClose }) {
             </div>
           </div>
 
+          {/* Assignee */}
+          <div>
+            <label className="block text-xs text-[#8a8a8a] mb-1">
+              Assignee
+            </label>
+            <select
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className="w-full bg-[#242424] border border-[#2e2e2e] text-white text-sm rounded px-3 py-2 outline-none focus:border-[#5e5ce6]"
+            >
+              <option value="">Unassigned</option>
+              {members?.map((member) => (
+                <option key={member.user._id} value={member.user._id}>
+                  {member.user.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Actions */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

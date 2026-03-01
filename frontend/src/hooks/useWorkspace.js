@@ -45,3 +45,16 @@ export const useJoinWorkspace = () => {
     },
   })
 }
+
+export const useGetWorkspaceMembers = () => {
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
+
+  return useQuery({
+    queryKey: ['workspace-members', workspaceId],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/workspaces/${workspaceId}`)
+      return data.members
+    },
+    enabled: !!workspaceId,
+  })
+}
