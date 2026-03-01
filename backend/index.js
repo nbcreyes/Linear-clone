@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import connectDB from './src/db.js';
 import authRoutes from './src/routes/authRoutes.js';
+import issueRoutes from './src/routes/issueRoutes.js';
 import protect from './src/middleware/authMiddleware.js';
 
 // Connect to MongoDB
@@ -19,11 +20,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-
-// Protected test route
-app.get('/api/protected', protect, (req, res) => {
-  res.json({ message: `Hello ${req.user.name}, you are authorized` });
-});
+app.use('/api/issues', issueRoutes);
 
 // Test route
 app.get('/', (req, res) => {
