@@ -1,11 +1,52 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useGetIssues } from '../hooks/useIssues'
 import IssueItem from '../components/IssueItem'
 import CreateIssueModal from '../components/CreateIssueModal'
+import socket from '../lib/socket'
 
 function IssuesPage() {
   const [showModal, setShowModal] = useState(false)
   const { data: issues, isLoading, isError } = useGetIssues()
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    // Listen for new issue
+    socket.on('issue:created', (newIssue) => {
+      queryClient.setQueryData(['issues'], (oldIssues) => {
+        if (!oldIssues) return [newIssue]
+        // Avoid duplicates
+        const exists = oldIssues.some((i) => i._id === newIssue._id)
+        if (exists) return oldIssues
+        return [newIssue, ...oldIssues]
+      })
+    })
+
+    // Listen for updated issue
+    socket.on('issue:updated', (updatedIssue) => {
+      queryClient.setQueryData(['issues'], (oldIssues) => {
+        if (!oldIssues) return oldIssues
+        return oldIssues.map((i) =>
+          i._id === updatedIssue._id ? updatedIssue : i
+        )
+      })
+    })
+
+    // Listen for deleted issue
+    socket.on('issue:deleted', (deletedId) => {
+      queryClient.setQueryData(['issues'], (oldIssues) => {
+        if (!oldIssues) return oldIssues
+        return oldIssues.filter((i) => i._id !== deletedId)
+      })
+    })
+
+    // Cleanup listeners when component unmounts
+    return () => {
+      socket.off('issue:created')
+      socket.off('issue:updated')
+      socket.off('issue:deleted')
+    }
+  }, [queryClient])
 
   return (
     <div className="h-full flex flex-col">
