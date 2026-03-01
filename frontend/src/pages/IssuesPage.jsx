@@ -4,44 +4,48 @@ import { useGetIssues } from '../hooks/useIssues'
 import IssueItem from '../components/IssueItem'
 import CreateIssueModal from '../components/CreateIssueModal'
 import socket from '../lib/socket'
+import useWorkspaceStore from '../store/workspaceStore'
 
 function IssuesPage() {
   const [showModal, setShowModal] = useState(false)
   const { data: issues, isLoading, isError } = useGetIssues()
   const queryClient = useQueryClient()
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
 
   useEffect(() => {
-    socket.on('issue:created', (newIssue) => {
-      queryClient.setQueryData(['issues'], (oldIssues) => {
-        if (!oldIssues) return [newIssue]
-        const exists = oldIssues.some((i) => i._id === newIssue._id)
-        if (exists) return oldIssues
-        return [newIssue, ...oldIssues]
-      })
-    })
+  if (!workspaceId) return
 
-    socket.on('issue:updated', (updatedIssue) => {
-      queryClient.setQueryData(['issues'], (oldIssues) => {
-        if (!oldIssues) return oldIssues
-        return oldIssues.map((i) =>
-          i._id === updatedIssue._id ? updatedIssue : i
-        )
-      })
+  socket.on(`issue:created:${workspaceId}`, (newIssue) => {
+    queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+      if (!oldIssues) return [newIssue]
+      const exists = oldIssues.some((i) => i._id === newIssue._id)
+      if (exists) return oldIssues
+      return [newIssue, ...oldIssues]
     })
+  })
 
-    socket.on('issue:deleted', (deletedId) => {
-      queryClient.setQueryData(['issues'], (oldIssues) => {
-        if (!oldIssues) return oldIssues
-        return oldIssues.filter((i) => i._id !== deletedId)
-      })
+  socket.on(`issue:updated:${workspaceId}`, (updatedIssue) => {
+    queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+      if (!oldIssues) return oldIssues
+      return oldIssues.map((i) =>
+        i._id === updatedIssue._id ? updatedIssue : i
+      )
     })
+  })
 
-    return () => {
-      socket.off('issue:created')
-      socket.off('issue:updated')
-      socket.off('issue:deleted')
-    }
-  }, [queryClient])
+  socket.on(`issue:deleted:${workspaceId}`, (deletedId) => {
+    queryClient.setQueryData(['issues', workspaceId], (oldIssues) => {
+      if (!oldIssues) return oldIssues
+      return oldIssues.filter((i) => i._id !== deletedId)
+    })
+  })
+
+  return () => {
+    socket.off(`issue:created:${workspaceId}`)
+    socket.off(`issue:updated:${workspaceId}`)
+    socket.off(`issue:deleted:${workspaceId}`)
+  }
+}, [queryClient, workspaceId])
 
   const todoIssues = issues?.filter((i) => i.status === 'todo') || []
   const inProgressIssues = issues?.filter((i) => i.status === 'in-progress') || []
