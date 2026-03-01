@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../lib/axios'
 import useWorkspaceStore from '../store/workspaceStore'
+import toast from 'react-hot-toast'
 
 export const useGetUserWorkspaces = () => {
   return useQuery({
@@ -24,6 +25,10 @@ export const useCreateWorkspace = () => {
     onSuccess: (data) => {
       setWorkspace(data)
       queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+      toast.success('Workspace created')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to create workspace')
     },
   })
 }
@@ -42,6 +47,10 @@ export const useJoinWorkspace = () => {
     onSuccess: (data) => {
       setWorkspace(data)
       queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+      toast.success('Joined workspace')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to join workspace')
     },
   })
 }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../lib/axios'
 import useWorkspaceStore from '../store/workspaceStore'
+import toast from 'react-hot-toast'
 
 export const useGetIssues = () => {
   const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
@@ -31,6 +32,10 @@ export const useCreateIssue = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues', workspaceId] })
+      toast.success('Issue created')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to create issue')
     },
   })
 }
@@ -50,6 +55,10 @@ export const useUpdateIssue = () => {
     onSuccess: (updatedIssue) => {
       queryClient.invalidateQueries({ queryKey: ['issues', workspaceId] })
       queryClient.setQueryData(['issue', updatedIssue._id], updatedIssue)
+      toast.success('Issue updated')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to update issue')
     },
   })
 }
@@ -67,6 +76,10 @@ export const useDeleteIssue = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues', workspaceId] })
+      toast.success('Issue deleted')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to delete issue')
     },
   })
 }
