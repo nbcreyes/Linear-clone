@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import IssuesPage from './pages/IssuesPage'
+import IssuePage from './pages/IssuePage'
 import WorkspacePage from './pages/WorkspacePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import WorkspaceRoute from './components/WorkspaceRoute'
@@ -29,6 +30,18 @@ function App() {
               <WorkspaceRoute>
                 <Layout>
                   <IssuesPage />
+                </Layout>
+              </WorkspaceRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/issues/:id'
+          element={
+            <ProtectedRoute>
+              <WorkspaceRoute>
+                <Layout>
+                  <IssuePage />
                 </Layout>
               </WorkspaceRoute>
             </ProtectedRoute>

@@ -47,8 +47,9 @@ export const useUpdateIssue = () => {
       )
       return data
     },
-    onSuccess: () => {
+    onSuccess: (updatedIssue) => {
       queryClient.invalidateQueries({ queryKey: ['issues', workspaceId] })
+      queryClient.setQueryData(['issue', updatedIssue._id], updatedIssue)
     },
   })
 }
