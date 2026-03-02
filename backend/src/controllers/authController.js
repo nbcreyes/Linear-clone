@@ -83,3 +83,46 @@ export const login = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Update current user profile
+// @route   PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, currentPassword, newPassword } = req.body
+
+    const user = await User.findById(req.user._id)
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    // Update name if provided
+    if (name) {
+      user.name = name
+    }
+
+    // Update password if provided
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password)
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' })
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'New password must be at least 6 characters' })
+      }
+      const salt = await bcrypt.genSalt(10)
+      user.password = await bcrypt.hash(newPassword, salt)
+    }
+
+    await user.save()
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id),
+    })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
