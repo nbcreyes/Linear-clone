@@ -11,6 +11,7 @@ import workspaceRoutes from './src/routes/workspaceRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import commentRoutes from './src/routes/commentRoutes.js';
+import activityRoutes from './src/routes/activityRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -39,6 +40,7 @@ app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/workspaces/:workspaceId/issues/:issueId/comments', commentRoutes);
+app.use('/api/workspaces/:workspaceId/issues/:issueId/activity', activityRoutes);
 
 // Test route
 app.get('/', (req, res) => {

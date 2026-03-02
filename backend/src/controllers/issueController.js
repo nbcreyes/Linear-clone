@@ -1,6 +1,7 @@
 import Issue from '../models/Issue.js';
 import Workspace from '../models/Workspace.js';
 import Notification from '../models/Notification.js';
+import Activity from '../models/Activity.js';
 
 // Helper to check if user is a member of a workspace
 const isMember = (workspace, userId) => {
@@ -96,6 +97,15 @@ export const createIssue = async (req, res) => {
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
 
+    // Log created activity
+    await Activity.create({
+      actor: req.user._id,
+      issue: issue._id,
+      workspace: req.params.workspaceId,
+      type: 'created',
+    })
+
+    // Create notification if issue is assigned to someone else
     if (assignee && assignee !== req.user._id.toString()) {
       const notification = await Notification.create({
         recipient: assignee,
@@ -147,6 +157,92 @@ export const updateIssue = async (req, res) => {
     const previousAssignee = issue.assignee?.toString();
     const newAssignee = req.body.assignee;
 
+    // Build activity logs for changed fields
+    const activities = []
+
+    if (req.body.status && req.body.status !== issue.status) {
+      activities.push({
+        actor: req.user._id,
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        type: 'status_changed',
+        from: issue.status,
+        to: req.body.status,
+      })
+    }
+
+    if (req.body.priority && req.body.priority !== issue.priority) {
+      activities.push({
+        actor: req.user._id,
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        type: 'priority_changed',
+        from: issue.priority,
+        to: req.body.priority,
+      })
+    }
+
+    if (req.body.title && req.body.title !== issue.title) {
+      activities.push({
+        actor: req.user._id,
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        type: 'title_changed',
+        from: issue.title,
+        to: req.body.title,
+      })
+    }
+
+    if (
+      req.body.description !== undefined &&
+      req.body.description !== issue.description
+    ) {
+      activities.push({
+        actor: req.user._id,
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        type: 'description_changed',
+        from: null,
+        to: null,
+      })
+    }
+
+    if (req.body.dueDate !== undefined) {
+      const oldDate = issue.dueDate
+        ? new Date(issue.dueDate).toISOString().split('T')[0]
+        : null
+      const newDate = req.body.dueDate
+        ? new Date(req.body.dueDate).toISOString().split('T')[0]
+        : null
+
+      if (oldDate !== newDate) {
+        activities.push({
+          actor: req.user._id,
+          issue: issue._id,
+          workspace: req.params.workspaceId,
+          type: 'due_date_changed',
+          from: oldDate,
+          to: newDate,
+        })
+      }
+    }
+
+    if (newAssignee !== undefined && newAssignee !== previousAssignee) {
+      activities.push({
+        actor: req.user._id,
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        type: 'assignee_changed',
+        from: previousAssignee || null,
+        to: newAssignee || null,
+      })
+    }
+
+    // Save all activity logs
+    if (activities.length > 0) {
+      await Activity.insertMany(activities)
+    }
+
     const updatedIssue = await Issue.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -155,7 +251,7 @@ export const updateIssue = async (req, res) => {
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
 
-    // Create notification if assignee changed and new assignee is not the actor
+    // Create notification if assignee changed
     if (
       newAssignee &&
       newAssignee !== previousAssignee &&
