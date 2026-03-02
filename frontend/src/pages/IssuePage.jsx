@@ -13,6 +13,8 @@ import Dropdown from '../components/Dropdown'
 import DatePicker from '../components/DatePicker'
 import Comments from '../components/Comments'
 import ActivityLog from '../components/ActivityLog'
+import MarkdownRenderer from '../components/MarkdownRenderer'
+import MarkdownEditor from '../components/MarkdownEditor'
 
 const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
 const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
@@ -307,28 +309,28 @@ function IssuePage() {
           <div className="mb-2">
             <p className="text-xs text-[#8a8a8a] mb-2">Description</p>
             {isEditingDescription ? (
-              <textarea
+              <MarkdownEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onBlur={handleDescriptionSave}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setDescription(issue.description || '')
-                    setIsEditingDescription(false)
-                  }
+                onChange={setDescription}
+                onSave={handleDescriptionSave}
+                onCancel={() => {
+                  setDescription(issue.description || '')
+                  setIsEditingDescription(false)
                 }}
-                autoFocus
-                rows={6}
-                placeholder="Add a description..."
-                className="w-full bg-[#1a1a1a] border border-[#5e5ce6] text-white text-sm rounded px-3 py-2 outline-none placeholder-[#4a4a4a] resize-none transition-colors"
+                placeholder="Add a description... Markdown is supported"
+                rows={8}
               />
             ) : (
               <div
                 onClick={() => setIsEditingDescription(true)}
-                className="min-h-16 p-2 rounded text-sm text-[#8a8a8a] cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+                className="min-h-16 p-2 rounded cursor-pointer hover:bg-[#1a1a1a] transition-colors"
                 title="Click to edit"
               >
-                {issue.description || 'Add a description...'}
+                {issue.description ? (
+                  <MarkdownRenderer content={issue.description} />
+                ) : (
+                  <p className="text-sm text-[#4a4a4a]">Add a description...</p>
+                )}
               </div>
             )}
           </div>

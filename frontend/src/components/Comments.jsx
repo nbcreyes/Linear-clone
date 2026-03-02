@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useGetComments, useCreateComment, useDeleteComment } from '../hooks/useComments'
 import useAuthStore from '../store/authStore'
 import socket from '../lib/socket'
+import MarkdownRenderer from './MarkdownRenderer'
+import MarkdownEditor from './MarkdownEditor'
 
 function Comments({ issueId }) {
   const [body, setBody] = useState('')
@@ -40,26 +42,14 @@ function Comments({ issueId }) {
     }
   }, [issueId, queryClient])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = () => {
     if (!body.trim()) return
-
     createComment(body, {
       onSuccess: () => {
         setBody('')
         setIsFocused(false)
       },
     })
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      handleSubmit(e)
-    }
-    if (e.key === 'Escape') {
-      setBody('')
-      setIsFocused(false)
-    }
   }
 
   const formatTime = (date) => {
@@ -148,9 +138,10 @@ function Comments({ issueId }) {
                 )}
               </div>
 
-              <p className="text-sm text-[#c0c0c0] leading-relaxed whitespace-pre-wrap break-words">
-                {comment.body}
-              </p>
+              {/* Markdown rendered comment body */}
+              <div className="mt-1">
+                <MarkdownRenderer content={comment.body} />
+              </div>
             </div>
           </div>
         ))}
@@ -168,49 +159,26 @@ function Comments({ issueId }) {
 
         {/* Input area */}
         <div className="flex-1">
-          <div className={`border rounded-lg transition-colors ${
-            isFocused
-              ? 'border-[#5e5ce6] bg-[#1a1a1a]'
-              : 'border-[#2e2e2e] bg-[#1a1a1a]'
-          }`}>
-            <textarea
+          {isFocused ? (
+            <MarkdownEditor
               value={body}
-              onChange={(e) => setBody(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onKeyDown={handleKeyDown}
-              placeholder="Add a comment..."
-              rows={isFocused ? 3 : 1}
-              className="w-full bg-transparent text-sm text-white px-3 py-2 outline-none placeholder-[#4a4a4a] resize-none transition-all"
+              onChange={setBody}
+              onSave={handleSubmit}
+              onCancel={() => {
+                setBody('')
+                setIsFocused(false)
+              }}
+              placeholder="Add a comment... Markdown is supported"
+              rows={3}
             />
-
-            {/* Submit bar — only show when focused */}
-            {isFocused && (
-              <div className="flex items-center justify-between px-3 py-2 border-t border-[#2e2e2e]">
-                <span className="text-[10px] text-[#4a4a4a]">
-                  Ctrl+Enter to submit
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBody('')
-                      setIsFocused(false)
-                    }}
-                    className="text-xs text-[#8a8a8a] hover:text-white transition-colors px-2 py-1 rounded hover:bg-[#242424]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isPending || !body.trim()}
-                    className="text-xs bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white px-3 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isPending ? 'Posting...' : 'Comment'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          ) : (
+            <div
+              onClick={() => setIsFocused(true)}
+              className="px-3 py-2 border border-[#2e2e2e] rounded-lg text-sm text-[#4a4a4a] cursor-text hover:border-[#3e3e3e] transition-colors bg-[#1a1a1a]"
+            >
+              Add a comment...
+            </div>
+          )}
         </div>
       </div>
     </div>
