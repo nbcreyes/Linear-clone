@@ -2,6 +2,14 @@ import mongoose from 'mongoose';
 
 const issueSchema = new mongoose.Schema(
   {
+    identifier: {
+      type: String,
+      required: true,
+    },
+    number: {
+      type: Number,
+      required: true,
+    },
     title: {
       type: String,
       required: true,
@@ -35,6 +43,10 @@ const issueSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Workspace',
       required: true,
+    },
+    dueDate: {
+      type: Date,
+      default: null,
     },
   },
   {

@@ -32,6 +32,16 @@ const workspaceSchema = new mongoose.Schema(
       unique: true,
       default: () => crypto.randomBytes(6).toString('hex'),
     },
+    identifier: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+    },
+    issueCounter: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

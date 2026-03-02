@@ -1,5 +1,14 @@
 import Workspace from '../models/Workspace.js';
 
+// Generate identifier from workspace name
+const generateIdentifier = (name) => {
+  const words = name.trim().split(/\s+/)
+  if (words.length === 1) {
+    return words[0].substring(0, 4).toUpperCase()
+  }
+  return words.map((w) => w[0]).join('').substring(0, 5).toUpperCase()
+}
+
 // @desc    Create a new workspace
 // @route   POST /api/workspaces
 export const createWorkspace = async (req, res) => {
@@ -10,9 +19,11 @@ export const createWorkspace = async (req, res) => {
       return res.status(400).json({ message: 'Workspace name is required' });
     }
 
-    // Create the workspace and add the creator as owner
+    const identifier = generateIdentifier(name)
+
     const workspace = await Workspace.create({
       name,
+      identifier,
       owner: req.user._id,
       members: [{ user: req.user._id, role: 'owner' }],
     });
@@ -37,14 +48,12 @@ export const joinWorkspace = async (req, res) => {
       return res.status(400).json({ message: 'Invite code is required' });
     }
 
-    // Find workspace by invite code
     const workspace = await Workspace.findOne({ inviteCode });
 
     if (!workspace) {
       return res.status(404).json({ message: 'Invalid invite code' });
     }
 
-    // Check if user is already a member
     const alreadyMember = workspace.members.some(
       (m) => m.user.toString() === req.user._id.toString()
     );
@@ -53,7 +62,6 @@ export const joinWorkspace = async (req, res) => {
       return res.status(400).json({ message: 'You are already a member of this workspace' });
     }
 
-    // Add user as a member
     workspace.members.push({ user: req.user._id, role: 'member' });
     await workspace.save();
 
@@ -79,7 +87,6 @@ export const getWorkspace = async (req, res) => {
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
-    // Check if the requesting user is a member
     const isMember = workspace.members.some(
       (m) => m.user._id.toString() === req.user._id.toString()
     );

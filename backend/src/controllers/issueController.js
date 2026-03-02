@@ -66,13 +66,22 @@ export const createIssue = async (req, res) => {
       return res.status(403).json({ message: 'Not a member of this workspace' });
     }
 
-    const { title, description, status, priority, assignee } = req.body;
+    const { title, description, status, priority, assignee, dueDate } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
 
+    // Increment issue counter on workspace
+    workspace.issueCounter += 1;
+    await workspace.save();
+
+    const issueNumber = workspace.issueCounter;
+    const issueIdentifier = `${workspace.identifier}-${issueNumber}`;
+
     const issue = await Issue.create({
+      identifier: issueIdentifier,
+      number: issueNumber,
       title,
       description,
       status,
@@ -80,13 +89,13 @@ export const createIssue = async (req, res) => {
       assignee: assignee || null,
       createdBy: req.user._id,
       workspace: req.params.workspaceId,
+      dueDate: dueDate || null,
     });
 
     const populatedIssue = await Issue.findById(issue._id)
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
 
-    // Create notification if issue is assigned to someone else
     if (assignee && assignee !== req.user._id.toString()) {
       const notification = await Notification.create({
         recipient: assignee,
@@ -102,7 +111,6 @@ export const createIssue = async (req, res) => {
         .populate('issue', 'title')
         .populate('workspace', 'name')
 
-      // Emit notification to the assigned user
       const io = req.app.get('io');
       io.emit(`notification:${assignee}`, populatedNotification);
     }
