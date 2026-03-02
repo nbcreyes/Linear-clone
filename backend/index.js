@@ -9,6 +9,7 @@ import connectDB from './src/db.js';
 import authRoutes from './src/routes/authRoutes.js';
 import workspaceRoutes from './src/routes/workspaceRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
+import notificationRoutes from './src/routes/notificationRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -35,6 +36,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test route
 app.get('/', (req, res) => {

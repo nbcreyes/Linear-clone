@@ -1,5 +1,6 @@
 import Issue from '../models/Issue.js';
 import Workspace from '../models/Workspace.js';
+import Notification from '../models/Notification.js';
 
 // Helper to check if user is a member of a workspace
 const isMember = (workspace, userId) => {
@@ -85,6 +86,27 @@ export const createIssue = async (req, res) => {
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
 
+    // Create notification if issue is assigned to someone else
+    if (assignee && assignee !== req.user._id.toString()) {
+      const notification = await Notification.create({
+        recipient: assignee,
+        actor: req.user._id,
+        type: 'issue_assigned',
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        message: `${req.user.name} assigned you to "${title}"`,
+      })
+
+      const populatedNotification = await Notification.findById(notification._id)
+        .populate('actor', 'name email')
+        .populate('issue', 'title')
+        .populate('workspace', 'name')
+
+      // Emit notification to the assigned user
+      const io = req.app.get('io');
+      io.emit(`notification:${assignee}`, populatedNotification);
+    }
+
     const io = req.app.get('io');
     io.emit(`issue:created:${req.params.workspaceId}`, populatedIssue);
 
@@ -114,6 +136,9 @@ export const updateIssue = async (req, res) => {
       return res.status(404).json({ message: 'Issue not found' });
     }
 
+    const previousAssignee = issue.assignee?.toString();
+    const newAssignee = req.body.assignee;
+
     const updatedIssue = await Issue.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -121,6 +146,30 @@ export const updateIssue = async (req, res) => {
     )
       .populate('createdBy', 'name email')
       .populate('assignee', 'name email');
+
+    // Create notification if assignee changed and new assignee is not the actor
+    if (
+      newAssignee &&
+      newAssignee !== previousAssignee &&
+      newAssignee !== req.user._id.toString()
+    ) {
+      const notification = await Notification.create({
+        recipient: newAssignee,
+        actor: req.user._id,
+        type: 'issue_assigned',
+        issue: issue._id,
+        workspace: req.params.workspaceId,
+        message: `${req.user.name} assigned you to "${issue.title}"`,
+      })
+
+      const populatedNotification = await Notification.findById(notification._id)
+        .populate('actor', 'name email')
+        .populate('issue', 'title')
+        .populate('workspace', 'name')
+
+      const io = req.app.get('io');
+      io.emit(`notification:${newAssignee}`, populatedNotification);
+    }
 
     const io = req.app.get('io');
     io.emit(`issue:updated:${req.params.workspaceId}`, updatedIssue);
