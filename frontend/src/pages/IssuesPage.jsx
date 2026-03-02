@@ -7,9 +7,9 @@ import socket from "../lib/socket";
 import useWorkspaceStore from "../store/workspaceStore";
 import { IssueRowSkeleton } from "../components/Skeleton";
 import useKeyboardShortcut from "../hooks/useKeyboardShortcut";
-import StatusIcon from '../components/StatusIcon'
-import PriorityIcon from '../components/PriorityIcon'
-import Dropdown from '../components/Dropdown'
+import StatusIcon from "../components/StatusIcon";
+import PriorityIcon from "../components/PriorityIcon";
+import Dropdown from "../components/Dropdown";
 
 const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
 const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
@@ -153,6 +153,7 @@ function IssuesPage() {
 
         {/* Status filter */}
         <Dropdown
+          alignRight
           value={filterStatus}
           options={[
             { value: "", label: "All statuses" },
@@ -205,6 +206,7 @@ function IssuesPage() {
 
         {/* Priority filter */}
         <Dropdown
+          alignRight
           value={filterPriority}
           options={[
             { value: "", label: "All priorities" },

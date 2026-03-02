@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import useWorkspaceStore from '../store/workspaceStore'
+import toast from 'react-hot-toast'
 
 const navItems = [
   { label: 'My Issues', path: '/issues' },
@@ -27,6 +28,17 @@ function Sidebar() {
     navigate('/workspace')
   }
 
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentWorkspace?.inviteCode)
+    toast.success('Invite code copied')
+  }
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/join/${currentWorkspace?.inviteCode}`
+    navigator.clipboard.writeText(link)
+    toast.success('Invite link copied')
+  }
+
   return (
     <div className="w-60 h-screen bg-[#141414] border-r border-[#2e2e2e] flex flex-col select-none">
 
@@ -42,15 +54,98 @@ function Sidebar() {
             {currentWorkspace?.name}
           </span>
         </div>
+
+        {/* Members count */}
+        <p className="text-[#8a8a8a] text-xs mb-2">
+          {currentWorkspace?.members?.length} member{currentWorkspace?.members?.length !== 1 ? 's' : ''}
+        </p>
+
+        {/* Invite toggle */}
         <button
           onClick={() => setShowInvite(!showInvite)}
-          className="text-xs text-[#5e5ce6] hover:text-[#4f4dd4] transition-colors"
+          className="w-full flex items-center justify-between px-2 py-1.5 rounded bg-[#242424] hover:bg-[#2e2e2e] transition-colors"
         >
-          {showInvite ? 'Hide invite code' : 'Show invite code'}
+          <span className="text-xs text-[#8a8a8a]">Invite teammates</span>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            className={`transition-transform ${showInvite ? 'rotate-180' : ''}`}
+          >
+            <path
+              d="M2 3.5l3 3 3-3"
+              stroke="#8a8a8a"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
+
+        {/* Invite panel */}
         {showInvite && (
-          <div className="mt-2 px-2 py-1.5 bg-[#242424] rounded text-xs text-[#8a8a8a] font-mono break-all">
-            {currentWorkspace?.inviteCode}
+          <div className="mt-2 space-y-2">
+
+            {/* Invite code */}
+            <div>
+              <p className="text-[10px] text-[#8a8a8a] mb-1">Invite code</p>
+              <div className="flex items-center gap-1">
+                <div className="flex-1 px-2 py-1.5 bg-[#0f0f0f] border border-[#2e2e2e] rounded text-xs text-white font-mono truncate">
+                  {currentWorkspace?.inviteCode}
+                </div>
+                <button
+                  onClick={handleCopyCode}
+                  className="px-2 py-1.5 bg-[#242424] hover:bg-[#2e2e2e] border border-[#2e2e2e] rounded transition-colors flex-shrink-0"
+                  title="Copy invite code"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <rect
+                      x="4"
+                      y="4"
+                      width="7"
+                      height="7"
+                      rx="1"
+                      stroke="#8a8a8a"
+                      strokeWidth="1.2"
+                    />
+                    <path
+                      d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1"
+                      stroke="#8a8a8a"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Invite link */}
+            <div>
+              <p className="text-[10px] text-[#8a8a8a] mb-1">Invite link</p>
+              <button
+                onClick={handleCopyLink}
+                className="w-full flex items-center justify-between px-2 py-1.5 bg-[#0f0f0f] border border-[#2e2e2e] rounded hover:border-[#5e5ce6] transition-colors group"
+              >
+                <span className="text-xs text-[#8a8a8a] group-hover:text-white transition-colors truncate">
+                  Copy invite link
+                </span>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 ml-1">
+                  <path
+                    d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7"
+                    stroke="#8a8a8a"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M8 1h3m0 0v3m0-3L6 6"
+                    stroke="#8a8a8a"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </div>

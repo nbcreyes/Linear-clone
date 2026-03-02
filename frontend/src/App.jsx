@@ -7,6 +7,7 @@ import WorkspacePage from './pages/WorkspacePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import WorkspaceRoute from './components/WorkspaceRoute'
 import Layout from './components/Layout'
+import JoinPage from './pages/JoinPage'
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path='/join/:inviteCode' element={<JoinPage />} />
       </Routes>
     </BrowserRouter>
   )

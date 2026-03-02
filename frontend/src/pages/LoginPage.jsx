@@ -1,48 +1,53 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axiosInstance from '../lib/axios'
-import useAuthStore from '../store/authStore'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../lib/axios";
+import useAuthStore from "../store/authStore";
 
 function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const login = useAuthStore((state) => state.login)
-  const navigate = useNavigate()
+  const login = useAuthStore((state) => state.login);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const { data } = await axiosInstance.post('/auth/login', {
+      const { data } = await axiosInstance.post("/auth/login", {
         email,
         password,
-      })
-      login(data)
-      navigate('/issues')
+      });
+      login(data);
+
+      // Check if there is a pending invite code from a shared link
+      const pendingInviteCode = localStorage.getItem("pendingInviteCode");
+      if (pendingInviteCode) {
+        localStorage.removeItem("pendingInviteCode");
+        navigate(`/join/${pendingInviteCode}`);
+      } else {
+        navigate("/issues");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong')
+      setError(err.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
       <div className="w-full max-w-sm bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg p-8">
-        
         {/* Logo */}
         <div className="mb-8 text-center">
           <h1 className="text-white text-2xl font-semibold tracking-tight">
             Linear Clone
           </h1>
-          <p className="text-[#8a8a8a] text-sm mt-1">
-            Sign in to your account
-          </p>
+          <p className="text-[#8a8a8a] text-sm mt-1">Sign in to your account</p>
         </div>
 
         {/* Error message */}
@@ -55,9 +60,7 @@ function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-[#8a8a8a] mb-1">
-              Email
-            </label>
+            <label className="block text-sm text-[#8a8a8a] mb-1">Email</label>
             <input
               type="email"
               value={email}
@@ -87,13 +90,13 @@ function LoginPage() {
             disabled={loading}
             className="w-full bg-[#5e5ce6] hover:bg-[#4f4dd4] text-white text-sm font-medium py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         {/* Register link */}
         <p className="mt-6 text-center text-sm text-[#8a8a8a]">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link
             to="/register"
             className="text-[#5e5ce6] hover:text-[#4f4dd4] transition-colors"
@@ -103,7 +106,7 @@ function LoginPage() {
         </p>
       </div>
     </div>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;
