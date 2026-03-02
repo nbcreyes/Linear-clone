@@ -37,6 +37,7 @@ function IssuesPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
   const [filterAssignedToMe, setFilterAssignedToMe] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState({})
 
   const { data: issues, isLoading, isError } = useGetIssues()
   const queryClient = useQueryClient()
@@ -44,6 +45,13 @@ function IssuesPage() {
   const user = useAuthStore((state) => state.user)
 
   useKeyboardShortcut('c', () => setShowModal(true))
+
+  const toggleGroup = (key) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }
 
   useEffect(() => {
     if (!workspaceId) return
@@ -302,7 +310,27 @@ function IssuesPage() {
             {groups.map((group) =>
               group.issues.length > 0 ? (
                 <div key={group.key}>
-                  <div className="flex items-center gap-2 px-4 py-2 sticky top-0 bg-[#0f0f0f] border-b border-[#2e2e2e]">
+                  <div
+                    onClick={() => toggleGroup(group.key)}
+                    className="flex items-center gap-2 px-4 py-2 sticky top-0 bg-[#0f0f0f] border-b border-[#2e2e2e] cursor-pointer hover:bg-[#1a1a1a] transition-colors select-none"
+                  >
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      className={`transition-transform flex-shrink-0 ${
+                        collapsedGroups[group.key] ? '-rotate-90' : ''
+                      }`}
+                    >
+                      <path
+                        d="M2 3.5l3 3 3-3"
+                        stroke="#8a8a8a"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                     <span className="text-xs text-[#8a8a8a] font-medium">
                       {group.label}
                     </span>
@@ -310,9 +338,13 @@ function IssuesPage() {
                       {group.issues.length}
                     </span>
                   </div>
-                  {group.issues.map((issue) => (
-                    <IssueItem key={issue._id} issue={issue} />
-                  ))}
+                  {!collapsedGroups[group.key] && (
+                    <div>
+                      {group.issues.map((issue) => (
+                        <IssueItem key={issue._id} issue={issue} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : null
             )}

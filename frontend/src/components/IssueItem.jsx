@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDeleteIssue, useUpdateIssue } from '../hooks/useIssues'
 import StatusIcon from './StatusIcon'
@@ -37,6 +38,7 @@ const formatDueDate = (dueDate) => {
 }
 
 function IssueItem({ issue }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const { mutate: deleteIssue } = useDeleteIssue()
   const { mutate: updateIssue } = useUpdateIssue()
 
@@ -49,6 +51,16 @@ function IssueItem({ issue }) {
     ...p,
     icon: <PriorityIcon priority={p.value} size={12} />,
   }))
+
+  const handleDelete = () => {
+    if (confirmDelete) {
+      deleteIssue(issue._id)
+    } else {
+      setConfirmDelete(true)
+      // Auto reset after 3 seconds if user does not confirm
+      setTimeout(() => setConfirmDelete(false), 3000)
+    }
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
@@ -126,10 +138,14 @@ function IssueItem({ issue }) {
 
       {/* Delete button */}
       <button
-        onClick={() => deleteIssue(issue._id)}
-        className="text-[#8a8a8a] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-xs flex-shrink-0"
+        onClick={handleDelete}
+        className={`transition-all opacity-0 group-hover:opacity-100 text-xs flex-shrink-0 px-2 py-0.5 rounded ${
+          confirmDelete
+            ? 'text-white bg-red-500 hover:bg-red-600 opacity-100'
+            : 'text-[#8a8a8a] hover:text-red-400'
+        }`}
       >
-        Delete
+        {confirmDelete ? 'Confirm?' : 'Delete'}
       </button>
     </div>
   )

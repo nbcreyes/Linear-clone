@@ -1,97 +1,97 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "../lib/axios";
-import { useUpdateIssue, useDeleteIssue } from "../hooks/useIssues";
-import { useGetWorkspaceMembers } from "../hooks/useWorkspace";
-import useWorkspaceStore from "../store/workspaceStore";
-import { IssueDetailSkeleton } from "../components/Skeleton";
-import StatusIcon from "../components/StatusIcon";
-import PriorityIcon from "../components/PriorityIcon";
-import Dropdown from "../components/Dropdown";
-import DatePicker from "../components/DatePicker";
-import Comments from "../components/Comments";
-import ActivityLog from "../components/ActivityLog";
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import axiosInstance from '../lib/axios'
+import { useUpdateIssue, useDeleteIssue } from '../hooks/useIssues'
+import { useGetWorkspaceMembers } from '../hooks/useWorkspace'
+import useWorkspaceStore from '../store/workspaceStore'
+import useKeyboardShortcut from '../hooks/useKeyboardShortcut'
+import { IssueDetailSkeleton } from '../components/Skeleton'
+import StatusIcon from '../components/StatusIcon'
+import PriorityIcon from '../components/PriorityIcon'
+import Dropdown from '../components/Dropdown'
+import DatePicker from '../components/DatePicker'
+import Comments from '../components/Comments'
+import ActivityLog from '../components/ActivityLog'
 
-const statusOptions = ["backlog", "todo", "in-progress", "done", "cancelled"];
-const priorityOptions = ["no-priority", "urgent", "high", "medium", "low"];
+const statusOptions = ['backlog', 'todo', 'in-progress', 'done', 'cancelled']
+const priorityOptions = ['no-priority', 'urgent', 'high', 'medium', 'low']
 
 const statusStyles = {
-  backlog: { color: "text-[#8a8a8a]", label: "Backlog" },
-  todo: { color: "text-[#5e5ce6]", label: "Todo" },
-  "in-progress": { color: "text-[#f5a623]", label: "In Progress" },
-  done: { color: "text-[#4caf50]", label: "Done" },
-  cancelled: { color: "text-[#8a8a8a]", label: "Cancelled" },
-};
+  backlog: { color: 'text-[#8a8a8a]', label: 'Backlog' },
+  todo: { color: 'text-[#5e5ce6]', label: 'Todo' },
+  'in-progress': { color: 'text-[#f5a623]', label: 'In Progress' },
+  done: { color: 'text-[#4caf50]', label: 'Done' },
+  cancelled: { color: 'text-[#8a8a8a]', label: 'Cancelled' },
+}
 
 const priorityStyles = {
-  "no-priority": { color: "text-[#8a8a8a]", label: "No Priority" },
-  urgent: { color: "text-[#f44336]", label: "Urgent" },
-  high: { color: "text-[#f5a623]", label: "High" },
-  medium: { color: "text-[#5e5ce6]", label: "Medium" },
-  low: { color: "text-[#4caf50]", label: "Low" },
-};
+  'no-priority': { color: 'text-[#8a8a8a]', label: 'No Priority' },
+  urgent: { color: 'text-[#f44336]', label: 'Urgent' },
+  high: { color: 'text-[#f5a623]', label: 'High' },
+  medium: { color: 'text-[#5e5ce6]', label: 'Medium' },
+  low: { color: 'text-[#4caf50]', label: 'Low' },
+}
 
 function IssuePage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const workspaceId = useWorkspaceStore((state) => state.currentWorkspace?._id)
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
 
-  const { mutate: updateIssue } = useUpdateIssue();
-  const { mutate: deleteIssue } = useDeleteIssue();
-  const { data: members } = useGetWorkspaceMembers();
+  const { mutate: updateIssue } = useUpdateIssue()
+  const { mutate: deleteIssue } = useDeleteIssue()
+  const { data: members } = useGetWorkspaceMembers()
 
-  const {
-    data: issue,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["issue", id],
+  const { data: issue, isLoading, isError } = useQuery({
+    queryKey: ['issue', id],
     queryFn: async () => {
       const { data } = await axiosInstance.get(
-        `/workspaces/${workspaceId}/issues/${id}`,
-      );
-      return data;
+        `/workspaces/${workspaceId}/issues/${id}`
+      )
+      return data
     },
     enabled: !!workspaceId && !!id,
-  });
+  })
 
   useEffect(() => {
     if (issue) {
-      setTitle(issue.title);
-      setDescription(issue.description || "");
+      setTitle(issue.title)
+      setDescription(issue.description || '')
     }
-  }, [issue]);
+  }, [issue])
+
+  // Keyboard shortcut E to edit title
+  useKeyboardShortcut('e', () => setIsEditingTitle(true))
 
   const handleTitleSave = () => {
     if (!title.trim() || title === issue.title) {
-      setTitle(issue.title);
-      setIsEditingTitle(false);
-      return;
+      setTitle(issue.title)
+      setIsEditingTitle(false)
+      return
     }
-    updateIssue({ id, title });
-    setIsEditingTitle(false);
-  };
+    updateIssue({ id, title })
+    setIsEditingTitle(false)
+  }
 
   const handleDescriptionSave = () => {
     if (description === issue.description) {
-      setIsEditingDescription(false);
-      return;
+      setIsEditingDescription(false)
+      return
     }
-    updateIssue({ id, description });
-    setIsEditingDescription(false);
-  };
+    updateIssue({ id, description })
+    setIsEditingDescription(false)
+  }
 
   const handleDelete = () => {
     deleteIssue(id, {
-      onSuccess: () => navigate("/issues"),
-    });
-  };
+      onSuccess: () => navigate('/issues'),
+    })
+  }
 
   if (isLoading) {
     return (
@@ -104,7 +104,7 @@ function IssuePage() {
           <IssueDetailSkeleton />
         </div>
       </div>
-    );
+    )
   }
 
   if (isError || !issue) {
@@ -112,19 +112,19 @@ function IssuePage() {
       <div className="flex items-center justify-center h-full">
         <p className="text-red-400 text-sm">Failed to load issue</p>
       </div>
-    );
+    )
   }
 
-  const status = statusStyles[issue.status] || statusStyles.todo;
-  const priority =
-    priorityStyles[issue.priority] || priorityStyles["no-priority"];
+  const status = statusStyles[issue.status] || statusStyles.todo
+  const priority = priorityStyles[issue.priority] || priorityStyles['no-priority']
 
   return (
     <div className="h-full flex flex-col">
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-[#2e2e2e]">
         <button
-          onClick={() => navigate("/issues")}
+          onClick={() => navigate('/issues')}
           className="flex items-center gap-1.5 text-[#8a8a8a] hover:text-white text-sm transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -149,6 +149,7 @@ function IssuePage() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-8">
+
           {/* Identifier */}
           <p className="text-xs text-[#4a4a4a] font-mono mb-3">
             {issue.identifier}
@@ -163,10 +164,10 @@ function IssuePage() {
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={handleTitleSave}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleTitleSave();
-                  if (e.key === "Escape") {
-                    setTitle(issue.title);
-                    setIsEditingTitle(false);
+                  if (e.key === 'Enter') handleTitleSave()
+                  if (e.key === 'Escape') {
+                    setTitle(issue.title)
+                    setIsEditingTitle(false)
                   }
                 }}
                 autoFocus
@@ -176,7 +177,7 @@ function IssuePage() {
               <h1
                 onClick={() => setIsEditingTitle(true)}
                 className="text-white text-2xl font-semibold cursor-pointer hover:text-[#c0c0c0] transition-colors"
-                title="Click to edit"
+                title="Click to edit or press E"
               >
                 {issue.title}
               </h1>
@@ -185,11 +186,10 @@ function IssuePage() {
 
           {/* Properties */}
           <div className="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg p-4 mb-6 space-y-1">
+
             {/* Status */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Status
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Status</span>
               <Dropdown
                 value={issue.status}
                 options={statusOptions.map((s) => ({
@@ -211,9 +211,7 @@ function IssuePage() {
 
             {/* Priority */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Priority
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Priority</span>
               <Dropdown
                 value={issue.priority}
                 options={priorityOptions.map((p) => ({
@@ -235,21 +233,17 @@ function IssuePage() {
 
             {/* Assignee */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Assignee
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Assignee</span>
               <Dropdown
-                value={issue.assignee?._id || ""}
+                value={issue.assignee?._id || ''}
                 options={[
-                  { value: "", label: "Unassigned" },
+                  { value: '', label: 'Unassigned' },
                   ...(members?.map((m) => ({
                     value: m.user._id,
                     label: m.user.name,
                   })) || []),
                 ]}
-                onChange={(value) =>
-                  updateIssue({ id, assignee: value || null })
-                }
+                onChange={(value) => updateIssue({ id, assignee: value || null })}
                 trigger={
                   <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-[#242424] transition-colors">
                     {issue.assignee ? (
@@ -273,14 +267,11 @@ function IssuePage() {
 
             {/* Due date */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Due date
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Due date</span>
               <DatePicker
-                value={
-                  issue.dueDate
-                    ? new Date(issue.dueDate).toISOString().split("T")[0]
-                    : ""
+                value={issue.dueDate
+                  ? new Date(issue.dueDate).toISOString().split('T')[0]
+                  : ''
                 }
                 onChange={(val) => updateIssue({ id, dueDate: val || null })}
               />
@@ -288,31 +279,25 @@ function IssuePage() {
 
             {/* Created by */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Created by
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Created by</span>
               <div className="flex items-center gap-2 px-2 py-1">
                 <div className="w-4 h-4 rounded-full bg-[#5e5ce6] flex items-center justify-center">
                   <span className="text-white text-[9px] font-medium">
                     {issue.createdBy?.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span className="text-sm text-white">
-                  {issue.createdBy?.name}
-                </span>
+                <span className="text-sm text-white">{issue.createdBy?.name}</span>
               </div>
             </div>
 
             {/* Created at */}
             <div className="flex items-center gap-4 py-1">
-              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">
-                Created
-              </span>
+              <span className="text-xs text-[#8a8a8a] w-24 flex-shrink-0">Created</span>
               <span className="text-sm text-[#8a8a8a] px-2 py-1">
-                {new Date(issue.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
+                {new Date(issue.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
                 })}
               </span>
             </div>
@@ -327,9 +312,9 @@ function IssuePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={handleDescriptionSave}
                 onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setDescription(issue.description || "");
-                    setIsEditingDescription(false);
+                  if (e.key === 'Escape') {
+                    setDescription(issue.description || '')
+                    setIsEditingDescription(false)
                   }
                 }}
                 autoFocus
@@ -343,7 +328,7 @@ function IssuePage() {
                 className="min-h-16 p-2 rounded text-sm text-[#8a8a8a] cursor-pointer hover:bg-[#1a1a1a] transition-colors"
                 title="Click to edit"
               >
-                {issue.description || "Add a description..."}
+                {issue.description || 'Add a description...'}
               </div>
             )}
           </div>
@@ -353,10 +338,11 @@ function IssuePage() {
 
           {/* Activity */}
           <ActivityLog issueId={id} />
+
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default IssuePage;
+export default IssuePage
