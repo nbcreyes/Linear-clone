@@ -10,6 +10,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import workspaceRoutes from './src/routes/workspaceRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
+import commentRoutes from './src/routes/commentRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -37,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/workspaces/:workspaceId/issues/:issueId/comments', commentRoutes);
 
 // Test route
 app.get('/', (req, res) => {
