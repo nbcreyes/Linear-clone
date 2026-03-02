@@ -4,6 +4,7 @@ import { useGetWorkspaceMembers } from '../hooks/useWorkspace'
 import StatusIcon from './StatusIcon'
 import PriorityIcon from './PriorityIcon'
 import Dropdown from './Dropdown'
+import DatePicker from './DatePicker'
 
 const statusOptions = [
   { value: 'backlog', label: 'Backlog' },
@@ -27,6 +28,7 @@ function CreateIssueModal({ onClose }) {
   const [status, setStatus] = useState('todo')
   const [priority, setPriority] = useState('no-priority')
   const [assignee, setAssignee] = useState('')
+  const [dueDate, setDueDate] = useState('')
 
   const { mutate: createIssue, isPending } = useCreateIssue()
   const { data: members } = useGetWorkspaceMembers()
@@ -42,6 +44,7 @@ function CreateIssueModal({ onClose }) {
         status,
         priority,
         assignee: assignee || null,
+        dueDate: dueDate || null,
       },
       { onSuccess: onClose }
     )
@@ -157,6 +160,12 @@ function CreateIssueModal({ onClose }) {
                   )}
                 </div>
               }
+            />
+
+            {/* Due date */}
+            <DatePicker
+              value={dueDate}
+              onChange={setDueDate}
             />
           </div>
 

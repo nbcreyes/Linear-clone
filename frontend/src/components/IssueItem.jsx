@@ -20,6 +20,22 @@ const priorityOptions = [
   { value: 'low', label: 'Low' },
 ]
 
+const dueDateColor = (dueDate) => {
+  if (!dueDate) return ''
+  const now = new Date()
+  const due = new Date(dueDate)
+  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return 'text-red-400'
+  if (diffDays <= 2) return 'text-[#f5a623]'
+  return 'text-[#8a8a8a]'
+}
+
+const formatDueDate = (dueDate) => {
+  if (!dueDate) return null
+  const due = new Date(dueDate)
+  return due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 function IssueItem({ issue }) {
   const { mutate: deleteIssue } = useDeleteIssue()
   const { mutate: updateIssue } = useUpdateIssue()
@@ -35,7 +51,7 @@ function IssueItem({ issue }) {
   }))
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
+    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[#2e2e2e] hover:bg-[#1a1a1a] group transition-colors">
 
       {/* Priority */}
       <Dropdown
@@ -61,6 +77,11 @@ function IssueItem({ issue }) {
         }
       />
 
+      {/* Identifier */}
+      <span className="text-xs text-[#4a4a4a] font-mono flex-shrink-0 w-16">
+        {issue.identifier}
+      </span>
+
       {/* Title */}
       <Link
         to={`/issues/${issue._id}`}
@@ -68,6 +89,13 @@ function IssueItem({ issue }) {
       >
         {issue.title}
       </Link>
+
+      {/* Due date */}
+      {issue.dueDate && (
+        <span className={`text-xs flex-shrink-0 ${dueDateColor(issue.dueDate)}`}>
+          {formatDueDate(issue.dueDate)}
+        </span>
+      )}
 
       {/* Assignee */}
       {issue.assignee ? (
