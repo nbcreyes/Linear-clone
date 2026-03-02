@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '../store/authStore'
 import useWorkspaceStore from '../store/workspaceStore'
+import { useGetNotifications } from '../hooks/useNotifications'
+import NotificationsPanel from './NotificationsPanel'
+import socket from '../lib/socket'
 import toast from 'react-hot-toast'
 
 const navItems = [
@@ -11,11 +15,41 @@ const navItems = [
 function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace)
   const clearWorkspace = useWorkspaceStore((state) => state.clearWorkspace)
   const [showInvite, setShowInvite] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  const { data: notifications } = useGetNotifications()
+  const unreadCount = notifications?.filter((n) => !n.read).length || 0
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (!user?._id) return
+
+    socket.on(`notification:${user._id}`, (notification) => {
+      queryClient.setQueryData(['notifications'], (old) => {
+        if (!old) return [notification]
+        return [notification, ...old]
+      })
+      toast(notification.message, {
+        icon: '🔔',
+        style: {
+          background: '#1a1a1a',
+          color: '#ffffff',
+          border: '1px solid #2e2e2e',
+          fontSize: '13px',
+        },
+      })
+    })
+
+    return () => {
+      socket.off(`notification:${user._id}`)
+    }
+  }, [user?._id, queryClient])
 
   const handleLogout = () => {
     logout()
@@ -55,12 +89,10 @@ function Sidebar() {
           </span>
         </div>
 
-        {/* Members count */}
         <p className="text-[#8a8a8a] text-xs mb-2">
           {currentWorkspace?.members?.length} member{currentWorkspace?.members?.length !== 1 ? 's' : ''}
         </p>
 
-        {/* Invite toggle */}
         <button
           onClick={() => setShowInvite(!showInvite)}
           className="w-full flex items-center justify-between px-2 py-1.5 rounded bg-[#242424] hover:bg-[#2e2e2e] transition-colors"
@@ -83,11 +115,8 @@ function Sidebar() {
           </svg>
         </button>
 
-        {/* Invite panel */}
         {showInvite && (
           <div className="mt-2 space-y-2">
-
-            {/* Invite code */}
             <div>
               <p className="text-[10px] text-[#8a8a8a] mb-1">Invite code</p>
               <div className="flex items-center gap-1">
@@ -100,26 +129,13 @@ function Sidebar() {
                   title="Copy invite code"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <rect
-                      x="4"
-                      y="4"
-                      width="7"
-                      height="7"
-                      rx="1"
-                      stroke="#8a8a8a"
-                      strokeWidth="1.2"
-                    />
-                    <path
-                      d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1"
-                      stroke="#8a8a8a"
-                      strokeWidth="1.2"
-                    />
+                    <rect x="4" y="4" width="7" height="7" rx="1" stroke="#8a8a8a" strokeWidth="1.2" />
+                    <path d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1" stroke="#8a8a8a" strokeWidth="1.2" />
                   </svg>
                 </button>
               </div>
             </div>
 
-            {/* Invite link */}
             <div>
               <p className="text-[10px] text-[#8a8a8a] mb-1">Invite link</p>
               <button
@@ -130,19 +146,8 @@ function Sidebar() {
                   Copy invite link
                 </span>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 ml-1">
-                  <path
-                    d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7"
-                    stroke="#8a8a8a"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M8 1h3m0 0v3m0-3L6 6"
-                    stroke="#8a8a8a"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7" stroke="#8a8a8a" strokeWidth="1.2" strokeLinecap="round" />
+                  <path d="M8 1h3m0 0v3m0-3L6 6" stroke="#8a8a8a" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -179,6 +184,49 @@ function Sidebar() {
 
       {/* Bottom actions */}
       <div className="p-2 border-t border-[#2e2e2e] space-y-0.5">
+
+        {/* Notifications button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-sm transition-colors ${
+              showNotifications
+                ? 'bg-[#242424] text-white'
+                : 'text-[#8a8a8a] hover:bg-[#1e1e1e] hover:text-white'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 1a5 5 0 00-5 5v3l-1.5 2H14.5L13 9V6a5 5 0 00-5-5z"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M6.5 13a1.5 1.5 0 003 0"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span>Notifications</span>
+            </div>
+            {unreadCount > 0 && (
+              <span className="bg-[#5e5ce6] text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications panel */}
+          {showNotifications && (
+            <NotificationsPanel
+              onClose={() => setShowNotifications(false)}
+            />
+          )}
+        </div>
+
         <button
           onClick={handleSwitchWorkspace}
           className="w-full text-left px-3 py-1.5 rounded text-sm text-[#8a8a8a] hover:bg-[#1e1e1e] hover:text-white transition-colors"
