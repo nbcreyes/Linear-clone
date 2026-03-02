@@ -52,8 +52,9 @@ export const useUpdateIssue = () => {
       )
       return data
     },
-    onSuccess: (updatedIssue) => {
+    onSuccess: (updatedIssue, variables) => {
       queryClient.invalidateQueries({ queryKey: ['issues', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['activity', variables.id] })
       queryClient.setQueryData(['issue', updatedIssue._id], updatedIssue)
       toast.success('Issue updated')
     },
